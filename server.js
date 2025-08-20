@@ -22,7 +22,59 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.log('MongoDB connection error:', err));
 
-// Test route
+// Import Todo model
+const Todo = require('./models/Todo');
+
+// ---------- CRUD API Routes ---------- //
+
+// Get all todos
+app.get('/api/todos', async (req, res) => {
+  try {
+    const todos = await Todo.find();
+    res.json(todos);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create a new todo
+app.post('/api/todos', async (req, res) => {
+  try {
+    const newTodo = new Todo({ task: req.body.task });
+    const savedTodo = await newTodo.save();
+    res.json(savedTodo);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a todo (toggle completed)
+app.put('/api/todos/:id', async (req, res) => {
+  try {
+    const todo = await Todo.findById(req.params.id);
+    if (!todo) return res.status(404).json({ error: 'Todo not found' });
+
+    todo.completed = !todo.completed;
+    const updatedTodo = await todo.save();
+    res.json(updatedTodo);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete a todo
+app.delete('/api/todos/:id', async (req, res) => {
+  try {
+    const deletedTodo = await Todo.findByIdAndDelete(req.params.id);
+    if (!deletedTodo) return res.status(404).json({ error: 'Todo not found' });
+
+    res.json({ message: 'Todo deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------- Test route ---------- //
 app.get('/test', (req, res) => {
   res.send('Server is working!');
 });
